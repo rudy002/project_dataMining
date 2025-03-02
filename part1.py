@@ -204,6 +204,135 @@ def h_clustering(dim, k, points, dist=None, clusts=None):
     
     return clusts
 
+def k_means(dim, k, n, points, clusts=None):
+    """
+    Effectue un clustering K-means sur un ensemble de points.
+    
+    Paramètres:
+    -----------
+    dim : int
+        Dimension des points
+    k : int
+        Nombre de clusters à former
+    n : int
+        Paramètre non utilisé, inclus pour compatibilité
+    points : list
+        Liste des points à regrouper en clusters
+    clusts : list, optional
+        Liste initiale de clusters (si fournie, doit contenir k clusters)
+    
+    Retourne:
+    ---------
+    list
+        Liste de k clusters où chaque cluster est une liste de points
+    """
+    # Vérifier les entrées
+    if not points:
+        return []
+    
+    if k <= 0 or k > len(points):
+        raise ValueError(f"Le nombre de clusters k doit être entre 1 et {len(points)}")
+    
+    # Convertir les points en tableaux numpy pour faciliter les calculs
+    points_np = np.array(points)
+    
+    # Initialiser les centroides
+    if clusts is not None:
+        # Si des clusters sont fournis, calculer leurs centroides
+        if len(clusts) != k:
+            raise ValueError(f"Le nombre de clusters fournis ({len(clusts)}) doit être égal à k ({k})")
+        
+        centroids = np.array([np.mean(cluster, axis=0) for cluster in clusts])
+    else:
+        # Sinon, choisir k points aléatoires comme centroides initiaux
+        indices = np.random.choice(len(points), k, replace=False)
+        centroids = points_np[indices]
+    
+    # Initialiser les clusters
+    clusters = [[] for _ in range(k)]
+    
+    # Variables pour suivre la convergence
+    max_iterations = 100
+    tolerance = 1e-4
+    converged = False
+    iteration = 0
+    
+    while not converged and iteration < max_iterations:
+        # Réinitialiser les clusters
+        clusters = [[] for _ in range(k)]
+        
+        # Assigner chaque point au cluster du centroide le plus proche
+        for i, point in enumerate(points_np):
+            # Calculer la distance à chaque centroide
+            distances = [euclidean_distance(point, centroid) for centroid in centroids]
+            # Assigner au cluster le plus proche
+            closest_centroid = np.argmin(distances)
+            clusters[closest_centroid].append(tuple(point))
+        
+        # Sauvegarder les anciens centroides pour vérifier la convergence
+        old_centroids = centroids.copy()
+        
+        # Mettre à jour les centroides
+        for i in range(k):
+            if clusters[i]:  # Éviter la division par zéro si un cluster est vide
+                centroids[i] = np.mean(clusters[i], axis=0)
+        
+        # Vérifier la convergence
+        centroid_shifts = [euclidean_distance(centroids[i], old_centroids[i]) for i in range(k)]
+        total_shift = sum(centroid_shifts)
+        
+        if total_shift < tolerance:
+            converged = True
+            print(f"K-means a convergé après {iteration+1} itérations")
+        
+        iteration += 1
+    
+    if iteration == max_iterations:
+        print(f"K-means a atteint le nombre maximum d'itérations ({max_iterations})")
+    
+    return clusters
+
+def save_points(clusts, out_path, out_path_tagged):
+    """
+    Sauvegarde les clusters dans deux fichiers CSV.
+    
+    Paramètres:
+    -----------
+    clusts : list
+        Liste de clusters où chaque cluster est une liste de points
+    out_path : str
+        Chemin où sauvegarder le fichier CSV sans les identifiants de clusters
+    out_path_tagged : str
+        Chemin où sauvegarder le fichier CSV avec les identifiants de clusters
+    """
+    # Créer les répertoires de sortie si nécessaire
+    for path in [out_path, out_path_tagged]:
+        dirname = os.path.dirname(path)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
+    
+    # Sauvegarder les points sans identifiants de clusters
+    with open(out_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for cluster_id, cluster in enumerate(clusts):
+            for point in cluster:
+                # Écrire seulement les coordonnées du point
+                writer.writerow(list(point))
+    
+    # Sauvegarder les points avec identifiants de clusters
+    with open(out_path_tagged, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for cluster_id, cluster in enumerate(clusts):
+            for point in cluster:
+                # Écrire les coordonnées et l'ID du cluster
+                writer.writerow(list(point) + [cluster_id])
+    
+    # Compter le nombre total de points
+    total_points = sum(len(cluster) for cluster in clusts)
+    
+    print(f"Sauvegardé {total_points} points dans {out_path} (sans identifiants de clusters)")
+    print(f"Sauvegardé {total_points} points dans {out_path_tagged} (avec identifiants de clusters)")
+
 # Exemple d'utilisation:
 if __name__ == "__main__":
     # Exemple de génération de données
@@ -216,7 +345,16 @@ if __name__ == "__main__":
     
     # Exemple de clustering hiérarchique
     if points:
-        clusters = h_clustering(dim=3, k=3, points=points)
-        print(f"Nombre de clusters créés: {len(clusters)}")
-        for i, cluster in enumerate(clusters):
+        clusters_h = h_clustering(dim=3, k=3, points=points)
+        print(f"Nombre de clusters créés (hiérarchique): {len(clusters_h)}")
+        for i, cluster in enumerate(clusters_h):
             print(f"Cluster {i}: {len(cluster)} points")
+        
+        # Exemple de clustering K-means
+        clusters_k = k_means(dim=3, k=3, n=len(points), points=points)
+        print(f"Nombre de clusters créés (K-means): {len(clusters_k)}")
+        for i, cluster in enumerate(clusters_k):
+            print(f"Cluster {i}: {len(cluster)} points")
+        
+        # Exemple de sauvegarde des résultats
+        save_points(clusters_k, "results_kmeans.csv", "results_kmeans_tagged.csv")
