@@ -61,6 +61,9 @@ def generate_data(dim, k, n, out_path, points_gen=None, extras={}):
                 # Keep cluster information in memory list, but it won't be written to file
                 points.append((tuple(point), cluster_id))
     
+    # Create path for tagged data
+    out_path_tagged = os.path.splitext(out_path)[0] + "_tagged.csv"
+    
     # Write points to CSV file (without cluster ID)
     with open(out_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -68,7 +71,15 @@ def generate_data(dim, k, n, out_path, points_gen=None, extras={}):
             # Write only point coordinates
             writer.writerow(list(point))
     
+    # Write points to CSV file (with cluster ID)
+    with open(out_path_tagged, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for point, cluster_id in points:
+            # Write point coordinates and cluster ID
+            writer.writerow(list(point) + [cluster_id])
+    
     print(f"Data generated and saved to {out_path}: {n} points in {dim} dimensions distributed in {k} clusters (without cluster IDs)")
+    print(f"Data generated and saved to {out_path_tagged}: {n} points in {dim} dimensions distributed in {k} clusters (with cluster IDs)")
     return points
 
 def load_points(in_path, dim, n=-1, points=None):
