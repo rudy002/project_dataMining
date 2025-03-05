@@ -397,26 +397,26 @@ def calculate_accuracy(clusters, tagged_file_path, dim):
 # Example usage:
 if __name__ == "__main__":
     # Example of data generation
-    generate_data(dim=3, k=2, n=1000, out_path="firstPart/example_data.csv")
+    generate_data(dim=3, k=8, n=1000, out_path="firstPart/example_data.csv")
     
     # Example of data loading
     points = []
-    load_points(in_path="firstPart/example_data_dim3_k2.csv", dim=3, points=points)
+    load_points(in_path="firstPart/example_data.csv", dim=3, points=points)
     print(f"Number of points loaded: {len(points)}")
     
     # Example of hierarchical clustering
     if points:
-        clusters_h = h_clustering(dim=3, k=2, points=points)
+        clusters_h = h_clustering(dim=3, k=8, points=points)
         print(f"Number of clusters created (hierarchical): {len(clusters_h)}")
         for i, cluster in enumerate(clusters_h):
             print(f"Cluster {i}: {len(cluster)} points")
         
         # Calculate accuracy for hierarchical clustering
-        h_accuracy = calculate_accuracy(clusters_h, "firstPart/example_data_dim3_k2_tagged.csv", dim=3)
+        h_accuracy = calculate_accuracy(clusters_h, "firstPart/example_data_tagged.csv", dim=3)
         print(f"Accuracy of hierarchical clustering: {h_accuracy:.4f}")
         
         # Example of K-means clustering
-        clusters_k = k_means(dim=3, k=2, n=len(points), points=points)
+        clusters_k = k_means(dim=3, k=8, n=len(points), points=points)
         print(f"Number of clusters created (K-means): {len(clusters_k)}")
         for i, cluster in enumerate(clusters_k):
             print(f"Cluster {i}: {len(cluster)} points")

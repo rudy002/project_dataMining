@@ -194,7 +194,7 @@ if __name__ == "__main__":
         dim=2,
         k=5,
         n=10000,
-        out_path="secondPart/test_data.csv"
+        out_path="firstPart/example_data.csv"
     )
     print("\nTest data generation completed.")
     
@@ -205,7 +205,7 @@ if __name__ == "__main__":
         k=5,
         n=10000,
         block_size=1000,
-        in_path="secondPart/test_data.csv",
+        in_path="firstPart/example_data.csv",
         out_path="secondPart/bfr_results.csv"
     )
     print("\nBFR clustering completed.")
